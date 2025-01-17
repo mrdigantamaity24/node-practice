@@ -9,12 +9,13 @@ const app = express();
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 }
-app.use(express.json());
+app.use(express.json());    // express file read
 
-app.use(express.static(`${__dirname}/public`));
-// =================================routing in a better way============================
+app.use(express.static(`${__dirname}/public`)); // serve static files
 
+// =================================routing============================
 app.use('/api/tours', tourRouter);
 app.use('/api/users', userRouter);
+// =================================routing============================
 
 module.exports = app;
