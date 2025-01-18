@@ -4,17 +4,23 @@ const Tour = require(`./../models/tourModel`);
 // get all tour
 const getAllTours = async (req, res) => {
     try {
-        // filter
-        const queryObj = { ...req.query }; // copy query object [here '...' this three dots is called spread operator]
-        const execludeFiled = ['page', 'limit', 'sort', 'fields'];  // exelude fileds which i don't want to be query
+        // 1 - filter
+        const queryObj = { ...req.query };  // copy query object [here '...' this three dots is called spread operator]
+        const execludeFiled = ['page', 'limit', 'sort', 'fields'];   // exelude fileds which i don't want to be query
         execludeFiled.forEach(el => delete queryObj[el]);   // delete the fields which i don't want to be query
 
-        // Advanced filter
+        // 2 - Advanced filter
         let queryStr = JSON.stringify(queryObj);
         queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, matche => `$${matche}`);
 
         // const query = Tour.find(JSON.parse(queryStr)); // for filtering
-        const query = Tour.find(JSON.parse(queryStr));  // for advance filtering
+        let query = Tour.find(JSON.parse(queryStr));  // for advance filtering
+
+        // 3 - sorting
+        if(req.query.sort){
+            const sortBy = req.query.sort.split(',').join(' '); // for multiple sorting
+            query = query.sort(sortBy);
+        }
 
         const allTours = await query;
         if (allTours.length > 0) {
