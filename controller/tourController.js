@@ -1,28 +1,21 @@
 const fs = require('fs');
 const Tour = require(`./../models/tourModel`);
+const TourAPIfeatures = require(`./../utils/apiFetauresTour`);
+
+// top 4 tours alais
+const aliasTopTours = (req, res, next) => {
+    req.query.limit = '4';  // how many tours to show
+    req.query.sort = '-ratingsAverage,price';   // get tour basis of which fields are you want to show
+    req.query.fields = 'name,price,ratingsAverage,summary,difficulty';  // which fields are you want to show
+    next();
+}
 
 // get all tour
 const getAllTours = async (req, res) => {
     try {
-        // 1 - filter
-        const queryObj = { ...req.query };  // copy query object [here '...' this three dots is called spread operator]
-        const execludeFiled = ['page', 'limit', 'sort', 'fields'];   // exelude fileds which i don't want to be query
-        execludeFiled.forEach(el => delete queryObj[el]);   // delete the fields which i don't want to be query
+        const apiFeatures = new TourAPIfeatures(Tour.find(), req.query).filter().sort().fieldlimit().pagination();
 
-        // 2 - Advanced filter
-        let queryStr = JSON.stringify(queryObj);
-        queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, matche => `$${matche}`);
-
-        // const query = Tour.find(JSON.parse(queryStr)); // for filtering
-        let query = Tour.find(JSON.parse(queryStr));  // for advance filtering
-
-        // 3 - sorting
-        if(req.query.sort){
-            const sortBy = req.query.sort.split(',').join(' '); // for multiple sorting
-            query = query.sort(sortBy);
-        }
-
-        const allTours = await query;
+        const allTours = await apiFeatures.query;
         if (allTours.length > 0) {
             res.status(200).json({
                 status: 'success',
@@ -108,7 +101,7 @@ const updateTour = async (req, res) => {
 const deleteTour = async (req, res) => {
     try {
         await Tour.findByIdAndDelete(req.params.id);
-        res.status(204).json({
+        res.status(200).json({
             status: 'success',
             message: 'Tour Successfully Deleted'
         });
@@ -124,7 +117,7 @@ const deleteTour = async (req, res) => {
 const allToursDelete = async (req, res) => {
     try {
         await Tour.deleteMany();
-        res.status(204).json({
+        res.status(200).json({
             status: 'success',
             message: 'All Tours Successfully Deleted'
         });
@@ -136,11 +129,56 @@ const allToursDelete = async (req, res) => {
     }
 };
 
+
+const getTourStatus = async (req, res) => {
+    try {
+        const stats = await Tour.aggregate([
+            {
+                $match: { ratingsAverage: { $gte: 4.5 } }
+            },
+            {
+                $group: {
+                    _id: '$difficulty',
+                    totalTour: { $sum: 1 },
+                    totalRatings: { $sum: '$ratingsQuantity' },
+                    totalPrice: { $sum: '$price' },
+                    avarageRating: { $avg: '$ratingsAverage' },
+                    avaragePrice: { $avg: '$price' },
+                    minPrice: { $min: '$price' },
+                    maxPrice: { $max: '$price' }
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                stats
+            }
+        });
+    } catch (error) {
+        res.status(404).json({
+            status: 'false',
+            message: err
+        })
+    }
+}
+
+
+
+
+
+
+
+
+// exports all methods
 module.exports = {
     getAllTours,
     addTour,
     getTour,
     updateTour,
     deleteTour,
-    allToursDelete
+    allToursDelete,
+    aliasTopTours,
+    getTourStatus
 }
