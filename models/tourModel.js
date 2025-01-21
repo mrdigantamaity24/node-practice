@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const tourSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'A tour must have a name'],
-        unique: true
+        unique: true,
+        trim: true,
     },
     duration: {
         type: Number,
@@ -17,6 +19,10 @@ const tourSchema = new mongoose.Schema({
     difficulty: {
         type: String,
         required: [true, 'A tour must have a difficulty'],
+        enum: {
+            values: ['easy', 'medium', 'difficult'],
+            message: 'Difficulty is either easy, medium or difficult'
+        }
     },
     ratingsAverage: {
         type: Number
@@ -27,6 +33,15 @@ const tourSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: [true, 'A tour must have price']
+    },
+    salePrice: {
+        type: Number,
+        validate: {
+            validator: function (val) {
+                return val < this.price;
+            },
+            message: 'Sale price ({VALUE}) must be less than the regular price'
+        }
     },
     discount: {
         type: Number,

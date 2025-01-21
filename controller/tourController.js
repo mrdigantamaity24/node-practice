@@ -129,7 +129,7 @@ const allToursDelete = async (req, res) => {
     }
 };
 
-
+// dada aggrigation
 const getTourStatus = async (req, res) => {
     try {
         const stats = await Tour.aggregate([
