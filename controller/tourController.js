@@ -2,6 +2,7 @@ const fs = require('fs');
 const Tour = require(`./../models/tourModel`);
 const TourAPIfeatures = require(`./../utils/apiFetauresTour`);
 const asyncError = require(`./../utils/asyncErrorhandle`);
+const AppError = require('../utils/appError');
 
 // top 4 tours alais
 const aliasTopTours = (req, res, next) => {
@@ -9,16 +10,14 @@ const aliasTopTours = (req, res, next) => {
     req.query.sort = '-ratingsAverage,price';   // get tour basis of which fields are you want to show
     req.query.fields = 'name,price,ratingsAverage,summary,difficulty';  // which fields are you want to show
     next();
-}
-
-
+};
 
 // get all tour
 const getAllTours = asyncError(async (req, res, next) => {
     const apiFeatures = new TourAPIfeatures(Tour.find(), req.query).filter().sort().fieldlimit().pagination();
 
     const allTours = await apiFeatures.query;
-    // if (allTours.length > 0) {
+
     res.status(200).json({
         status: 'success',
         results: allTours.length,
@@ -26,7 +25,7 @@ const getAllTours = asyncError(async (req, res, next) => {
             allTours
         }
     });
-})
+});
 
 // add a new tour
 const addTour = asyncError(async (req, res, next) => {
@@ -37,11 +36,17 @@ const addTour = asyncError(async (req, res, next) => {
             tours: newTour
         }
     })
-})
+});
 
 // get a tour by id
 const getTour = asyncError(async (req, res, next) => {
     const getTour = await Tour.findById(req.params.id);
+
+    // get tour by ID
+    if (!getTour) {
+        return next(new AppError('No tour found with this Id', 404));
+    }
+
     res.status(200).json({
         status: 'success',
         message: 'Tour found',
@@ -49,7 +54,7 @@ const getTour = asyncError(async (req, res, next) => {
             getTour
         }
     });
-})
+});
 
 // update a tour
 const updateTour = asyncError(async (req, res, next) => {
@@ -57,6 +62,12 @@ const updateTour = asyncError(async (req, res, next) => {
         new: true,
         runValidators: true
     });
+
+    // tours upadte by Id
+    if (!updatedTour) {
+        return next(new AppError('No tour found with this Id', 404));
+    }
+
     res.status(200).json({
         status: 'success',
         message: 'Tour Updated',
@@ -64,25 +75,37 @@ const updateTour = asyncError(async (req, res, next) => {
             updatedTour
         }
     });
-})
+});
 
 // delete a tour
 const deleteTour = asyncError(async (req, res, next) => {
-    await Tour.findByIdAndDelete(req.params.id);
+    const tourDelete = await Tour.findByIdAndDelete(req.params.id);
+
+    // tours delete by id
+    if (!tourDelete) {
+        return next(new AppError('No tour found with this Id', 404));
+    }
+
     res.status(200).json({
         status: 'success',
         message: 'Tour Successfully Deleted'
     });
-})
+});
 
 // delete all tours
 const allToursDelete = asyncError(async (req, res, next) => {
-    await Tour.deleteMany();
+    const allTours = await Tour.deleteMany();
+
+    // all tours delete
+    if (!allTours) {
+        return next(new AppError('No tour found with this Id', 404));
+    }
+
     res.status(200).json({
         status: 'success',
         message: 'All Tours Successfully Deleted'
     });
-})
+});
 
 // data aggrigation
 const getTourStatus = asyncError(async (req, res, next) => {
@@ -110,11 +133,7 @@ const getTourStatus = asyncError(async (req, res, next) => {
             stats
         }
     });
-})
-
-
-
-
+});
 
 
 
