@@ -7,7 +7,13 @@ const handleInvalidId = err => {
 }
 // dupliacte value
 const handelDuplicateValue = err => {
-    const message = `"${err.errorResponse.keyValue.name}" is already exists.`;
+    let message = '';
+    if (err.errorResponse.keyValue.name) {
+        message = `"${err.errorResponse.keyValue.name}" name is already exists.`;
+    } else if (err.errorResponse.keyValue.email) {
+        message = `"${err.errorResponse.keyValue.email}" email is already exists.`;
+    }
+    // const message = `"${err.errorResponse.keyValue.name || err.errorResponse.keyValue.email}" is already exists.`;
     return new AppError(message, 400);
 }
 // validation error
@@ -36,7 +42,14 @@ const errorHandelMiddleware = (err, req, res, next) => {
     if (err.name === 'ValidationError') {
         err = handleValidationError(err);
     }
-
+    // JWT error (If token was not valid)
+    if (err.name === 'JsonWebTokenError') {
+        err = new AppError('Invalid Token, Please Login Again', 401);
+    }
+    // JWT error (If token was expired)
+    if (err.name === 'TokenExpiredError') {
+        err = new AppError('Token Expired, Please Login Again', 401);
+    }
 
     res.status(err.statusCode).json({
         status: err.status,

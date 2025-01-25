@@ -19,7 +19,8 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Ashwhole put a Password. :('],
-        minlength: 6
+        minlength: 6,
+        select: false
     },
     passwordConfirm: {
         type: String,
@@ -30,10 +31,11 @@ const userSchema = new mongoose.Schema({
             },
             message: 'Both password should be same'
         }
-    }
+    },
+    passwordChangedAt: Date
 });
 
-// password encryption
+// password encryption when user created
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next(); // run the code if the code was codified
 
@@ -44,6 +46,23 @@ userSchema.pre('save', async function (next) {
 
     next();
 });
+
+// compare the password when user login [in the below methods 'userpassword' is the password which is given by the user and 'dbpassword' is the password which is stored in the database]
+userSchema.methods.checkPasssword = async function (userpassword, dbpassword) {
+    return await bcrypt.compare(userpassword, dbpassword);
+}
+
+// check the password is changed after the token was issued
+userSchema.methods.passwordChangedAfter = function (JWTTimestamp) {
+
+    if (this.passwordChangedAt) {
+        const passwordChangedTime = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+        return JWTTimestamp < passwordChangedTime; // if the password was changed after the token was issued
+    }
+
+    // if the password was not changed
+    return false;
+}
 
 const User = mongoose.model('User', userSchema);
 

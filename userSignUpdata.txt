@@ -1,0 +1,10 @@
+{
+    "name": "Sudip Karan",
+    "email": "sudip@gmail.com",
+    "password": "test@123",
+}
+{
+    "name": "Diganta Maity",
+    "email": "diganta@gmail.com",
+    "password": "diganta@123",
+}
