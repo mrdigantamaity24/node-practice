@@ -24,7 +24,7 @@ mongoose.connect(DB)
 
 const app = require(`${__dirname}/app`);    // include app as a module from app.js file
 const port = process.env.PORT || 3000;
-const server = app.listen(port, () => {
+app.listen(port, () => {
     console.log("Server Running");
 });
 

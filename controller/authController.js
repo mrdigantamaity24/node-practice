@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
 const catchAsyncHandel = require('./../utils/asyncErrorhandle');
 const AppError = require('../utils/appError');
+const sendEmail = require('./../utils/email');
 
 // generate the token
 const signToken = id => {
@@ -16,10 +17,15 @@ exports.signUpUserAuth = catchAsyncHandel(async (req, res, next) => {
     const newUser = await User.create({
         name: req.body.name,
         email: req.body.email,
+        role: req.body.role,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
-        passwordChangedAt: req.body.passwordChangedAt
+        passwordChangedAt: req.body.passwordChangedAt,
+        passwordResetToken: req.body.passwordResetToken,
+        passwordResetExpires: req.body.passwordResetExpires
     });
+
+    // const newUser = await User.create(req.body);
 
     // generate the auth token
     const authToken = signToken(newUser._id);
@@ -90,3 +96,57 @@ exports.protectRoutes = catchAsyncHandel(async (req, res, next) => {
     req.user = freshUser;
     next();
 });
+
+// authorization the user roles [admin and the lead-guid only have the permission to change]
+exports.restrictUserRoles = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return next(new AppError('You don\'t have permission to access', 403));
+        }
+
+        next();
+    }
+}
+
+// forget password
+exports.forgetPassword = catchAsyncHandel(async (req, res, next) => {
+    // check the user email is exists or not in database
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+        return next(new AppError('This email is not exists', 403));
+    }
+
+    // genarate the random reset token
+    const resetToken = user.createForgetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    // send the email
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/users/resetPassword/${resetToken}`;
+
+    const message = `To reset your password click the following link ${resetUrl} Otherwise you can ignore this email`;
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'Reset Password (Valid for 10 min)',
+            message
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Email send to your email. Please check your email'
+        })
+    } catch (err) {
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+
+        await user.save({ validateBeforeSave: false });
+
+        return next(new AppError('Something is wrong to send the eamil', 500));
+    }
+});
+
+// reset password
+exports.resetPassword = (req, res, next) => {
+
+}
