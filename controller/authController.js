@@ -1,3 +1,4 @@
+const { crypto } = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('./../models/userModel');
@@ -121,7 +122,7 @@ exports.forgetPassword = catchAsyncHandel(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     // send the email
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/users/resetPassword/${resetToken}`;
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/users/resetpass/${resetToken}`;
 
     const message = `To reset your password click the following link ${resetUrl} Otherwise you can ignore this email`;
 
@@ -147,6 +148,51 @@ exports.forgetPassword = catchAsyncHandel(async (req, res, next) => {
 });
 
 // reset password
-exports.resetPassword = (req, res, next) => {
+exports.resetPassword = catchAsyncHandel(async (req, res, next) => {
+    // get user by the token which we have sent in the email
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
-}
+    const user = await User.findOne({ passwordResetToken: hashedToken, passwordResetExpires: { $gt: Date.now() } });
+
+    // check the token is valid or not or expired or not
+    if (!user) {
+        return next(new AppError('Invalide token', 400))
+    }
+
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    const token = signToken(user._id);
+
+    res.status(200).json({
+        status: 'Success',
+        token,
+        message: 'Password reset successfull'
+    });
+})
+
+// password change
+exports.passwordUpdate = catchAsyncHandel(async (req, res, next) => {
+    // const { _id, password } = req.body;
+    const loginUserData = await User.findById(req.user.id).select('+password');
+
+    // check the current password is it correct or not
+    if (!(await loginUserData.checkPasssword(req.body.passwordCurrent, loginUserData.password))) {
+        return next(new AppError('Current password is not matched', 401));
+    }
+
+    loginUserData.password = req.body.password;
+    loginUserData.passwordConfirm = req.body.passwordConfirm;
+    await loginUserData.save();
+
+    const token = signToken(loginUserData._id);
+
+    res.status(200).json({
+        status: 'Success',
+        message: 'Password Update successfully',
+        token
+    });
+});

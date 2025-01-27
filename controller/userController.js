@@ -1,9 +1,10 @@
 const fs = require('fs');
 const User = require('./../models/userModel');
 const catchAsyncHandel = require('./../utils/asyncErrorhandle');
+const AppError = require('../utils/appError');
 
 // get all user
-const getAllUsers = catchAsyncHandel(async (req, res, next) => {
+exports.getAllUsers = catchAsyncHandel(async (req, res, next) => {
     const users = await User.find();
     res.status(200).json({
         status: 'success',
@@ -15,27 +16,8 @@ const getAllUsers = catchAsyncHandel(async (req, res, next) => {
     });
 })
 
-// add a new user
-// const addUsers = async (req, res) => {
-//     try{
-//         const usersAdd = await User.create(req.body);
-//         res.status(201).json({
-//             status: 'success',
-//             message: 'Users add successfully',
-//             data: {
-//                 usersAdd
-//             }
-//         })
-//     }catch(err){
-//         res.status(404).json({
-//             status: 'fail',
-//             message: "Users add unsuccessfully"
-//         });
-//     }
-// }
-
 // get user by id
-const getUser = catchAsyncHandel(async (req, res, next) => {
+exports.getUser = catchAsyncHandel(async (req, res, next) => {
     const getuser = await User.findById(req.params.id);
     res.status(201).json({
         status: 'Success',
@@ -47,7 +29,12 @@ const getUser = catchAsyncHandel(async (req, res, next) => {
 })
 
 // update user data
-const updateUserData = catchAsyncHandel(async (req, res, next) => {
+exports.updateUserData = catchAsyncHandel(async (req, res, next) => {
+    // if user want to try to update password from this route
+    // if (req.body.password || req.body.passwordConfirm) {
+    //     return next(new AppError('For change password please use the update password route', 400));
+    // }
+
     const updateUser = await User.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true
@@ -62,7 +49,7 @@ const updateUserData = catchAsyncHandel(async (req, res, next) => {
 })
 
 // delete a user
-const deleteUserData = catchAsyncHandel(async (req, res, next) => {
+exports.deleteUserData = catchAsyncHandel(async (req, res, next) => {
     const deleteUser = await User.findByIdAndDelete(req.params.id);
     res.status(204).json({
         status: 'Successfull',
@@ -72,11 +59,3 @@ const deleteUserData = catchAsyncHandel(async (req, res, next) => {
         }
     })
 })
-
-module.exports = {
-    getAllUsers,
-    // addUsers,
-    getUser,
-    updateUserData,
-    deleteUserData
-}

@@ -55,6 +55,15 @@ userSchema.pre('save', async function (next) {
     next();
 });
 
+// save the password when reset password is happening
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password') || this.isNew) return next(); // run the code if the code was codified
+
+    this.passwordChangedAt = Date.now() - 1000;
+    next();
+});
+
+
 // compare the password when user login [in the below methods 'userpassword' is the password which is given by the user and 'dbpassword' is the password which is stored in the database]
 userSchema.methods.checkPasssword = async function (userpassword, dbpassword) {
     return await bcrypt.compare(userpassword, dbpassword);
