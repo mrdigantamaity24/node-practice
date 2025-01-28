@@ -184,10 +184,12 @@ exports.passwordUpdate = catchAsyncHandel(async (req, res, next) => {
         return next(new AppError('Current password is not matched', 401));
     }
 
+    // after get the data and check the password then update the password field
     loginUserData.password = req.body.password;
     loginUserData.passwordConfirm = req.body.passwordConfirm;
     await loginUserData.save();
 
+    // generate the token
     const token = signToken(loginUserData._id);
 
     res.status(200).json({

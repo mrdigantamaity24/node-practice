@@ -3,6 +3,18 @@ const User = require('./../models/userModel');
 const catchAsyncHandel = require('./../utils/asyncErrorhandle');
 const AppError = require('../utils/appError');
 
+
+const filterData = (obj, ...upadatedFileds) => {
+    // console.log(Object.keys(obj));
+    const newObj = {};
+    Object.keys(obj).forEach(el => {
+        if (upadatedFileds.includes(el)) {
+            newObj[el] = obj[el];
+        }
+    })
+    return newObj;
+}
+
 // get all user
 exports.getAllUsers = catchAsyncHandel(async (req, res, next) => {
     const users = await User.find();
@@ -31,26 +43,30 @@ exports.getUser = catchAsyncHandel(async (req, res, next) => {
 // update user data
 exports.updateUserData = catchAsyncHandel(async (req, res, next) => {
     // if user want to try to update password from this route
-    // if (req.body.password || req.body.passwordConfirm) {
-    //     return next(new AppError('For change password please use the update password route', 400));
-    // }
+    if (req.body.password || req.body.passwordConfirm) {
+        return next(new AppError('You can\'t change your password from here', 400));
+    }
 
-    const updateUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+    // filter the need field
+    const filteredUserData = filterData(req.body, 'name', 'email')
+
+    // update the user
+    const updateUser = await User.findByIdAndUpdate(req.params.id, filteredUserData, {
         new: true,
         runValidators: true
     });
-    res.status(204).json({
+    res.status(200).json({
         status: 'Successfull',
-        message: 'User update successfull',
+        message: 'User data update successfull',
         data: {
             updateUser
         }
     })
 })
 
-// delete a user
+// delete a user (not delete make it false)
 exports.deleteUserData = catchAsyncHandel(async (req, res, next) => {
-    const deleteUser = await User.findByIdAndDelete(req.params.id);
+    const deleteUser = await User.findByIdAndUpdate(req.params.id, { active: false });
     res.status(204).json({
         status: 'Successfull',
         message: 'User delete successfull',

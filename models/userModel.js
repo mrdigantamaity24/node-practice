@@ -40,7 +40,12 @@ const userSchema = new mongoose.Schema({
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
-    passwordResetExpires: Date
+    passwordResetExpires: Date,
+    active: {
+        type: Boolean,
+        default: true,
+        select: false
+    }
 });
 
 // password encryption when user created
@@ -60,6 +65,13 @@ userSchema.pre('save', async function (next) {
     if (!this.isModified('password') || this.isNew) return next(); // run the code if the code was codified
 
     this.passwordChangedAt = Date.now() - 1000;
+    next();
+});
+
+// returen all user but not the deactive one
+userSchema.pre(/^find/, function (next) {
+    // this points to the current query
+    this.find({ active: { $ne: false } });
     next();
 });
 
