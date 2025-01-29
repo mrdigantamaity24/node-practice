@@ -27,7 +27,7 @@ app.use('/api/users', userRouter);
 
 // when the route is not define
 app.all('*', (req, res, next) => {
-    next(new AppError(`Can't find ${req.originalUrl} on the server. Please check again`, 404));
+    next(new AppError(`Can't find ${req.originalUrl} this route on the server. Please check again`, 404));
 })
 
 // error handleing middleware global
