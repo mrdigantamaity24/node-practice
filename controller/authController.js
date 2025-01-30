@@ -13,6 +13,30 @@ const signToken = id => {
     });
 };
 
+// create token
+const createSendToken = (user, statusCode, res) => {
+    const token = signToken(user._id);
+    const cookieOptions = {
+        expires: new Date(
+            Date.now() + process.env.JWT_COOCKIE_EXPIRE_DAY * 24 * 60 * 60 * 1000
+        ),
+        httpOnly: true
+    };
+    if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
+    res.cookie('jwt', token, cookieOptions);
+
+    user.password = undefined;
+
+    res.status(statusCode).json({
+        status: 'success',
+        token,
+        data: {
+            user
+        }
+    });
+};
+
 // sign up auth for user
 exports.signUpUserAuth = catchAsyncHandel(async (req, res, next) => {
     const newUser = await User.create({
@@ -26,19 +50,8 @@ exports.signUpUserAuth = catchAsyncHandel(async (req, res, next) => {
         passwordResetExpires: req.body.passwordResetExpires
     });
 
-    // const newUser = await User.create(req.body);
-
-    // generate the auth token
-    const authToken = signToken(newUser._id);
-
-    res.status(200).json({
-        status: 'Success',
-        authToken,
-        message: 'User created successfully',
-        data: {
-            user: newUser
-        }
-    });
+    // creat token and send the token
+    createSendToken(newUser, 200, res);
 });
 
 // login auth for user
@@ -58,13 +71,7 @@ exports.userSignInAuth = catchAsyncHandel(async (req, res, next) => {
         return next(new AppError('Invalid credential', 401));
     }
 
-    const token = signToken(userData._id);
-
-    res.status(200).json({
-        status: 'Success',
-        token,
-        message: 'User login successfully'
-    });
+    createSendToken(userData, 200, res);
 });
 
 // protect the route
@@ -177,7 +184,7 @@ exports.resetPassword = catchAsyncHandel(async (req, res, next) => {
 // password change
 exports.passwordUpdate = catchAsyncHandel(async (req, res, next) => {
     // const { _id, password } = req.body;
-    const loginUserData = await User.findById(req.user.id).select('+password');
+    const loginUserData = await User.findById(req.user._id).select('+password');
 
     // check the current password is it correct or not
     if (!(await loginUserData.checkPasssword(req.body.passwordCurrent, loginUserData.password))) {
@@ -190,11 +197,5 @@ exports.passwordUpdate = catchAsyncHandel(async (req, res, next) => {
     await loginUserData.save();
 
     // generate the token
-    const token = signToken(loginUserData._id);
-
-    res.status(200).json({
-        status: 'Success',
-        message: 'Password Update successfully',
-        token
-    });
+    createSendToken(loginUserData, 200, res);
 });

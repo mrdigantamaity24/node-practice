@@ -51,7 +51,7 @@ exports.updateUserData = catchAsyncHandel(async (req, res, next) => {
     const filteredUserData = filterData(req.body, 'name', 'email')
 
     // update the user
-    const updateUser = await User.findByIdAndUpdate(req.params.id, filteredUserData, {
+    const updateUser = await User.findByIdAndUpdate(req.user._id, filteredUserData, {
         new: true,
         runValidators: true
     });
@@ -66,7 +66,7 @@ exports.updateUserData = catchAsyncHandel(async (req, res, next) => {
 
 // delete a user (not delete make it false)
 exports.deleteUserData = catchAsyncHandel(async (req, res, next) => {
-    const deleteUser = await User.findByIdAndUpdate(req.params.id, { active: false });
+    const deleteUser = await User.findByIdAndUpdate(req.user._id, { active: false });
     res.status(204).json({
         status: 'Successfull',
         message: 'User delete successfull',

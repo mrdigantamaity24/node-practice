@@ -6,8 +6,7 @@ var bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: [true, 'I think you have a Name which is given by your parents :('],
-        unique: true
+        required: [true, 'I think you have a Name which is given by your parents :(']
     },
     email: {
         type: String,
