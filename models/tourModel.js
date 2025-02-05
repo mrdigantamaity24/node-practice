@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const User = require('./userModel');
 
 const tourSchema = new mongoose.Schema({
     name: {
@@ -66,7 +67,53 @@ const tourSchema = new mongoose.Schema({
         default: Date.now(),
         select: false
     },
-    startDates: [Date]
+    startDates: [Date],
+    startLocation: {
+        type: {
+            type: String,
+            default: 'Point',
+            enum: ['Point']
+        },
+        cordinate: [Number],
+        address: String,
+        description: String
+    },
+    location: [
+        {
+            type: {
+                type: String,
+                default: 'Point',
+                enum: ['Point']
+            },
+            cordinate: [Number],
+            address: String,
+            description: String,
+            day: Number
+        }
+    ],
+    guids: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'User'
+        }
+    ]
+});
+
+// when i insert the reference the ids full object or information the we can do the below code or we can simply avoid the below code and use the reference ids like mySQL database
+// tourSchema.pre('save', async function (next) {
+//     const guidesPromises = this.guids.map(async id => await User.findById(id));
+//     this.guids = await Promise.all(guidesPromises);
+//     next();
+// });
+
+
+// QUERY MIDDLE WARE
+tourSchema.pre(/^find/, function (next) {
+    this.populate({
+        path: 'guids',
+        select: '-__v -passwordChangedAt'
+    })
+    next();
 });
 
 const Tour = mongoose.model('Tour', tourSchema);
