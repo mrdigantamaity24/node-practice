@@ -40,7 +40,7 @@ const addTour = asyncError(async (req, res, next) => {
 
 // get a tour by id
 const getTour = asyncError(async (req, res, next) => {
-    const getTour = await Tour.findById(req.params.id);
+    const getTour = await Tour.findById(req.params.id).populate('reviews');
 
     // get tour by ID
     if (!getTour) {

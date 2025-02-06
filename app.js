@@ -9,6 +9,7 @@ const AppError = require('./utils/appError');
 const globalError = require('./controller/errorController');
 const tourRouter = require(`./routes/tour-route`);
 const userRouter = require(`./routes/user-route`);
+const reviewRouter = require(`./routes/reviewRoute`);
 
 const app = express();
 
@@ -49,8 +50,9 @@ app.use((req, res, next) => {
 })
 
 // =================================routing============================
-app.use('/api/tours', tourRouter);
-app.use('/api/users', userRouter);
+app.use('/api/tours', tourRouter);  // tour route call
+app.use('/api/users', userRouter);  // user route call
+app.use('/api/reviews', reviewRouter);  // review route call
 
 // when the route is not define
 app.all('*', (req, res, next) => {

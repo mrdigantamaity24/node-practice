@@ -1,10 +1,13 @@
 const { crypto } = require('crypto');
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
+var fs = require('fs');
+var path = require('path');
 const User = require('./../models/userModel');
 const catchAsyncHandel = require('./../utils/asyncErrorhandle');
 const AppError = require('../utils/appError');
 const sendEmail = require('./../utils/email');
+
 
 // generate the token
 const signToken = id => {
@@ -39,9 +42,16 @@ const createSendToken = (user, statusCode, res) => {
 
 // sign up auth for user
 exports.signUpUserAuth = catchAsyncHandel(async (req, res, next) => {
+    let photoPath = null;
+
+    if (req.file) {
+        photoPath = `uploads/${req.file.filename}`; // Store file path, not binary
+    }
+
     const newUser = await User.create({
         name: req.body.name,
         email: req.body.email,
+        photo: photoPath,  // Only set if file is uploaded
         role: req.body.role,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
@@ -50,9 +60,10 @@ exports.signUpUserAuth = catchAsyncHandel(async (req, res, next) => {
         passwordResetExpires: req.body.passwordResetExpires
     });
 
-    // creat token and send the token
+    // Create and send token
     createSendToken(newUser, 200, res);
 });
+
 
 // login auth for user
 exports.userSignInAuth = catchAsyncHandel(async (req, res, next) => {
