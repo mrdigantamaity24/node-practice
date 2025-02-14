@@ -6,7 +6,7 @@ var path = require('path');
 const User = require('./../models/userModel');
 const catchAsyncHandel = require('./../utils/asyncErrorhandle');
 const AppError = require('../utils/appError');
-const sendEmail = require('./../utils/email');
+const MailSend = require('./../utils/email');
 
 
 // generate the token
@@ -60,8 +60,21 @@ exports.signUpUserAuth = catchAsyncHandel(async (req, res, next) => {
         passwordResetExpires: req.body.passwordResetExpires
     });
 
+    const message = 'Your account has been successfully created!';
+
     // Create and send token
     createSendToken(newUser, 200, res);
+
+    // Send welcome email
+    try {
+        await MailSend({
+            email: newUser.email,
+            subject: 'Welcome to Our Platform!',
+            message: message
+        });
+    } catch (error) {
+        console.error('Email sending failed:', error);
+    }
 });
 
 
@@ -144,18 +157,38 @@ exports.forgetPassword = catchAsyncHandel(async (req, res, next) => {
 
     const message = `To reset your password click the following link ${resetUrl} Otherwise you can ignore this email`;
 
+    // try {
+    //     await MailSend({
+    //         email: user.email,
+    //         subject: 'Reset Password (Valid for 10 min)',
+    //         message
+    //     });
+
+    //     res.status(200).json({
+    //         status: 'success',
+    //         message: 'Email send to your email. Please check your email'
+    //     })
+    // } catch (err) {
+    //     user.passwordResetToken = undefined;
+    //     user.passwordResetExpires = undefined;
+
+    //     await user.save({ validateBeforeSave: false });
+
+    //     return next(new AppError('Something is wrong to send the eamil', 500));
+    // }
+
     try {
-        await sendEmail({
+        await MailSend({
             email: user.email,
             subject: 'Reset Password (Valid for 10 min)',
-            message
+            message: message
         });
 
         res.status(200).json({
             status: 'success',
             message: 'Email send to your email. Please check your email'
         })
-    } catch (err) {
+    } catch (error) {
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
 
