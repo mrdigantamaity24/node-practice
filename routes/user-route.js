@@ -3,16 +3,20 @@ const userController = require(`./../controller/userController`);
 const authController = require('./../controller/authController');
 const upload = require('./../utils/upload');
 
-const routers = express.Router();
+const routes = express.Router();
 
-routers.get('/', userController.getAllUsers);   // get all users
-routers.get('/:id', authController.protectRoutes, userController.getUser);    // get user by id
-routers.post('/signup', upload.single('photo'), authController.signUpUserAuth); // signup route
-routers.post('/signin', authController.userSignInAuth); // signin route
-routers.post('/forgetpassword', authController.forgetPassword); // forgetpassword route
-routers.patch('/resetpass/:token', authController.resetPassword); // reset password route
-routers.patch('/updatepassword', authController.protectRoutes, authController.passwordUpdate); // update password route
-routers.patch('/updateMe/', authController.protectRoutes, userController.updateUserData);   // update user data
-routers.delete('/deleteMe', authController.protectRoutes, userController.deleteUserData); // delete user data
+routes.post('/signup', upload.single('photo'), authController.signUpUserAuth); // signup route
+routes.post('/signin', authController.userSignInAuth); // signin route
+routes.post('/forgetpassword', authController.forgetPassword); // forgetpassword route
+routes.patch('/resetpass/:token', authController.resetPassword); // reset password route
+routes.delete('/deleteMe/:id', userController.deleteUserById); // delete user data by id
 
-module.exports = routers;
+routes.use(authController.protectRoutes);
+routes.get('/', authController.restrictUserRoles('admin'), userController.getAllUsers);   // get all users
+routes.get('/me', userController.getMe, userController.getUser);    // get user by id
+routes.patch('/updatepassword', authController.passwordUpdate); // update password route
+routes.patch('/updateMe/', userController.updateUserData);   // update user data
+routes.delete('/deleteMe', userController.deleteUserData); // delete user data
+// routes.get('/getuser/:id', userController.getUser); // get single user by id
+
+module.exports = routes;

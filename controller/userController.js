@@ -2,6 +2,19 @@ const fs = require('fs');
 const User = require('./../models/userModel');
 const catchAsyncHandel = require('./../utils/asyncErrorhandle');
 const AppError = require('../utils/appError');
+const helperFactory = require('./helperController');
+
+
+// get all user
+exports.getAllUsers = helperFactory.getAllDocument(User);
+
+exports.getMe = (req, res, next) => {
+    req.params.id = req.user._id;
+    next();
+}
+
+// get user by id
+exports.getUser = helperFactory.getDocumentOneByID(User);
 
 
 const filterData = (obj, ...upadatedFileds) => {
@@ -14,31 +27,6 @@ const filterData = (obj, ...upadatedFileds) => {
     })
     return newObj;
 }
-
-// get all user
-exports.getAllUsers = catchAsyncHandel(async (req, res, next) => {
-    const users = await User.find();
-    res.status(200).json({
-        status: 'success',
-        length: users.length,
-        message: 'Users fetched successfully',
-        data: {
-            users
-        }
-    });
-})
-
-// get user by id
-exports.getUser = catchAsyncHandel(async (req, res, next) => {
-    const getuser = await User.findById(req.params.id);
-    res.status(201).json({
-        status: 'Success',
-        message: 'User found',
-        data: {
-            getuser
-        }
-    });
-})
 
 // update user data
 exports.updateUserData = catchAsyncHandel(async (req, res, next) => {
@@ -67,6 +55,18 @@ exports.updateUserData = catchAsyncHandel(async (req, res, next) => {
 // delete a user (not delete make it false)
 exports.deleteUserData = catchAsyncHandel(async (req, res, next) => {
     const deleteUser = await User.findByIdAndUpdate(req.user._id, { active: false });
+    res.status(204).json({
+        status: 'Successfull',
+        message: 'User delete successfull',
+        data: {
+            deleteUser
+        }
+    })
+});
+
+// delete user by id
+exports.deleteUserById = catchAsyncHandel(async (req, res, next) => {
+    const deleteUser = await User.findByIdAndUpdate(req.params.id, { active: false });
     res.status(204).json({
         status: 'Successfull',
         message: 'User delete successfull',
